@@ -6,11 +6,31 @@ import AuthMiddleware from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.post('/create', async (req, res) => {
+// Create user route
+router.post('/create', AuthMiddleware.validateToken, async (req, res) => {
     const response = await UserService.createUser(req);
     res.status(response.code).json(response.message);
 });
 
+// Ruta Get all users
+router.get('/getAllUsers', AuthMiddleware.validateToken, async (req, res) => {
+    const response = await UserService.getAllActiveUsers();
+    res.status(response.code).json(response.message);
+});
+
+// Ruta Find users with filters 
+router.get('/findUsers', [UserMiddleware.validateDateQueryParams, UserMiddleware.validateDeletedQueryParam, AuthMiddleware.validateToken], async (req, res) => {
+    const response = await UserService.findUsers(req);
+    res.status(response.code).json(response.message);
+});
+
+// Ruta bulkCreate users
+router.post('/bulkCreate', AuthMiddleware.validateToken, async (req, res) => {
+    const response = await UserService.bulkCreateUsers(req.body.Users);
+    res.status(response.code).json(response.message);
+});
+
+// Ruta Get user by ID
 router.get(
     '/:id',
     [
@@ -22,20 +42,12 @@ router.get(
     async (req, res) => {
         const response = await UserService.getUserById(req.params.id);
         res.status(response.code).json(response.message);
-    });
+    }
+);
 
-router.put('/:id', [
-        NumberMiddleware.isNumber,
-        UserMiddleware.isValidUserById,
-        AuthMiddleware.validateToken,
-        UserMiddleware.hasPermissions,
-    ],
-    async(req, res) => {
-        const response = await UserService.updateUser(req);
-        res.status(response.code).json(response.message);
-    });
-
-router.delete('/:id',
+// Ruta Update user 
+router.put(
+    '/:id',
     [
         NumberMiddleware.isNumber,
         UserMiddleware.isValidUserById,
@@ -43,8 +55,24 @@ router.delete('/:id',
         UserMiddleware.hasPermissions,
     ],
     async (req, res) => {
-       const response = await UserService.deleteUser(req.params.id);
-       res.status(response.code).json(response.message);
-    });
+        const response = await UserService.updateUser(req);
+        res.status(response.code).json(response.message);
+    }
+);
+
+// Ruta Delete user
+router.delete(
+    '/:id',
+    [
+        NumberMiddleware.isNumber,
+        UserMiddleware.isValidUserById,
+        AuthMiddleware.validateToken,
+        UserMiddleware.hasPermissions,
+    ],
+    async (req, res) => {
+        const response = await UserService.deleteUser(req.params.id);
+        res.status(response.code).json(response.message);
+    }
+);
 
 export default router;
